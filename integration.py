@@ -7,30 +7,43 @@ import socket
 import os
 from datetime import datetime, timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
+from configparser import ConfigParser
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 #------*****------#
 
-misp_auth_key = "mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO"
-misp_tag_filter = ["tlp:white", "tlp:green"]
-misp_server = "FQDN or IP of MISP Server"
+config = ConfigParser()
+config.optionxform = str 
+config.read('config.ini')
 
-qradar_auth_key = "811aacf9-ef79-456h-98d4-5d27b7a94844"
-qradar_server = "FQDN or IP of QRadar Server"
+misp_auth_key = config.get('general', 'misp_auth_key')
+misp_tag_filter = config.get('general', 'misp_tag_filter').split(",")
+misp_category_filter = config.get('general', 'misp_category_filter').split(",")
+misp_server = config.get('general', 'misp_server')
 
-qradar_refset_from_misp_attribute = {
-    # Map which MISP attributes (e.g. url, dst-ip, src-ip, domain) to copy into which reference set
-    "MISP_IP_IOC": ["ip-dst", "ip-src"],
-    "MISP_Domain_IOC": ["domain"],
-    "MISP_URL_IOC": ["url"],
-}
+qradar_auth_key = config.get('general', 'qradar_auth_key')
+qradar_server = config.get('general', 'qradar_server')
 
-frequency = 60 # In minutes
-fetch_incremental = True # Only load new attributes since the last interval
+frequency = config.getint('general', 'frequency')
+fetch_incremental = config.getboolean("general", "fetch_incremental")
+
+# Read refset config
+qradar_refset_from_misp_attribute = {}
+for (each_key, each_val) in config.items("refset_attributes"):
+    print(each_key, each_val)
+    qradar_refset_from_misp_attribute[each_key] = each_val.split(",")
 
 #------*****------#
 
+# Define algorithms to normalize return values
+stripProtocol = lambda x : re.sub("https?://", "", x)
+misp_clean_attributes = {
+	"url": stripProtocol,
+	"uri": stripProtocol,
+}
+
+# Prebuild headers
 MISP_headers = {
     'authorization': misp_auth_key,
     'cache-control': "no-cache",
@@ -45,10 +58,12 @@ MISP_request = {
     "tags": {
         "OR": misp_tag_filter
     },
+	"category": {
+		"OR": misp_category_filter
+	},
     "published": True,
     "enforceWarninglist": True,
 }
-
 QRadar_headers = {
     'sec': qradar_auth_key,
     'content-type': "application/json",
@@ -84,7 +99,11 @@ def get_misp_data(qradar_refset):
     if misp_response.status_code == 200:
         print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Success) ")
         for data in json_data["response"]["Attribute"]:
-            iocs = (data['value'])
+            dataValue = data["value"]
+            if data["type"] in misp_clean_attributes:
+                dataValue = misp_clean_attributes[data["type"]](dataValue)
+
+            iocs = (dataValue)
             ioc_list.append(iocs)
         import_data = json.dumps(ioc_list)
         ioc_count = len(ioc_list)

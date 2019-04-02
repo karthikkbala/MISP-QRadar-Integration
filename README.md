@@ -35,25 +35,29 @@ pip3 install -r requirements.txt
 
 ### Configuration:
 
-Edit the integration.py file with favourite editor and provide the following information.
+Edit the config.ini file with favourite editor and provide the following information.
 
-```sh
-misp_auth_key = "mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO"
-misp_tag_filter = ["tlp:white", "tlp:green"]
-misp_server = "FQDN or IP of MISP Server"
+```ini
+[general]
+misp_auth_key = mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO
+misp_tag_filter = tlp:white,tlp:green
+misp_category_filter = Network activity,Payload delivery,Artifacts dropped,Payload installation,Persistence mechanism
+misp_server = <FQDN or IP of MISP Server>
 
-qradar_auth_key = "811aacf9-ef79-456h-98d4-5d27b7a94844"
-qradar_server = "FQDN or IP of QRadar Server"
+qradar_auth_key = 811aacf9-ef79-456h-98d4-5d27b7a94844
+qradar_server = <FQDN or IP of QRadar Server>
 
-qradar_refset_from_misp_attribute = {
-    # Map which MISP attributes (e.g. url, dst-ip, src-ip, domain) to copy into which reference set
-    "MISP_IP_IOC": ["ip-dst", "ip-src"],
-    "MISP_Domain_IOC": ["domain"],
-    "MISP_URL_IOC": ["url"],
-}
+# In minutes
+frequency = 60
+# Only load new attributes since the last interval
+fetch_incremental = True
 
-frequency = 60 # In minutes
-fetch_incremental = True # Only load new attributes since the last interval
+[refset_attributes]
+# Map which MISP attributes (e.g. url, dst-ip, src-ip, domain) to copy into which reference set
+MISP_IP_IOC = ip-dst,ip-src
+MISP_Host_IOC = domain,hostname,domain
+MISP_Url_IOC = url,uri
+MISP_Filehash_IOC = md5,sha1,sha256
 ```
 
 ### Usage:
@@ -62,7 +66,7 @@ python3 integration.py >> /var/log/misp-integration.log &
 ```
 
 ### Error Handling - Use Cases
- - Validate if the reference set exists
+ - Validate if the reference sets exist
  - Identify the Element Type of the reference set
  - Socket connection validation for QRadar and MISP
 
