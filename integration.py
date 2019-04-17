@@ -19,6 +19,7 @@ config.read('config.ini')
 
 misp_auth_key = config.get('general', 'misp_auth_key')
 misp_tag_filter = config.get('general', 'misp_tag_filter').split(",")
+misp_tag_blacklist = config.get('general', 'misp_tag_blacklist').split(",")
 misp_category_filter = config.get('general', 'misp_category_filter').split(",")
 misp_server = config.get('general', 'misp_server')
 
@@ -31,7 +32,6 @@ fetch_incremental = config.getboolean("general", "fetch_incremental")
 # Read refset config
 qradar_refset_from_misp_attribute = {}
 for (each_key, each_val) in config.items("refset_attributes"):
-    print(each_key, each_val)
     qradar_refset_from_misp_attribute[each_key] = each_val.split(",")
 
 #------*****------#
@@ -50,13 +50,18 @@ MISP_headers = {
     'accept': "application/json",
     'content-type': "application/json",
 }
+misp_tag_blacklist = ["!" + tag for tag in misp_tag_blacklist]
 MISP_request = {
     "returnFormat": "json",
     "type": {
         "OR": None
     },
     "tags": {
-        "OR": misp_tag_filter
+		"AND": [
+			{"AND": misp_tag_blacklist},
+			{"OR": misp_tag_filter}
+		]
+        
     },
 	"category": {
 		"OR": misp_category_filter
@@ -107,10 +112,10 @@ def get_misp_data(qradar_refset):
             ioc_list.append(iocs)
         import_data = json.dumps(ioc_list)
         ioc_count = len(ioc_list)
-        print(time.strftime("%H:%M:%S") + " -- " + str(ioc_count) + " IOCs imported into " + qradar_refset)
+        print(time.strftime("%H:%M:%S") + " -- " + str(ioc_count) + " IOCs found for " + qradar_refset)
         qradar_post_all(qradar_refset, import_data, ioc_count)
     else:
-        print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Failed), Please check the network connectivity")
+        print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Failure " + str(misp_response.status_code) + "), Please check the network connectivity")
         sys.exit()
 
 def qradar_post_all(qradar_refset, import_data, ioc_count):
@@ -119,7 +124,7 @@ def qradar_post_all(qradar_refset, import_data, ioc_count):
     if qradar_response.status_code == 200:
         print(time.strftime("%H:%M:%S") + " -- " + "(Finished) Imported " + str(ioc_count) + " IOCs to QRadar (Success)" )
     else:
-        print(time.strftime("%H:%M:%S") + " -- " + "Could not POST IOCs to QRadar (Failure)")
+        print(time.strftime("%H:%M:%S") + " -- " + "Could not POST IOCs to QRadar (Failure " + str(qradar_response.status_code) + ")")
 
 def socket_check_qradar():
     print(time.strftime("%H:%M:%S") + " -- " + "Checking HTTPS Connectivity to QRadar")

@@ -41,6 +41,7 @@ Edit the config.ini file with favourite editor and provide the following informa
 [general]
 misp_auth_key = mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO
 misp_tag_filter = tlp:white,tlp:green
+misp_tag_blacklist = automatic-collection,low-risk
 misp_category_filter = Network activity,Payload delivery,Artifacts dropped,Payload installation,Persistence mechanism
 misp_server = <FQDN or IP of MISP Server>
 
