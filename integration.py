@@ -32,7 +32,10 @@ fetch_incremental = config.getboolean("general", "fetch_incremental")
 # Read refset config
 qradar_refset_from_misp_attribute = {}
 for (each_key, each_val) in config.items("refset_attributes"):
-    qradar_refset_from_misp_attribute[each_key] = each_val.split(",")
+    if ',' in each_val:
+        qradar_refset_from_misp_attribute[each_key] = { "OR": each_val.split(",") }
+    else:
+        qradar_refset_from_misp_attribute[each_key] = each_val
 
 #------*****------#
 
@@ -57,11 +60,8 @@ MISP_request = {
         "OR": None
     },
     "tags": {
-		"AND": [
-			{"AND": misp_tag_blacklist},
-			{"OR": misp_tag_filter}
-		]
-        
+        "NOT": misp_tag_blacklist,
+		"OR": misp_tag_filter
     },
 	"category": {
 		"OR": misp_category_filter
@@ -97,7 +97,7 @@ def get_misp_data(qradar_refset):
     else:
         print(getAnnouncement + " since account creation")
 
-    MISP_request["type"]["OR"] = qradar_refset_from_misp_attribute[qradar_refset]
+    MISP_request["type"] = qradar_refset_from_misp_attribute[qradar_refset]
     misp_response = requests.request('POST', "https://" + misp_server + "/attributes/restSearch", json=MISP_request, headers=MISP_headers, verify=False)
     json_data = misp_response.json()
     ioc_list = []
@@ -115,7 +115,7 @@ def get_misp_data(qradar_refset):
         print(time.strftime("%H:%M:%S") + " -- " + str(ioc_count) + " IOCs found for " + qradar_refset)
         qradar_post_all(qradar_refset, import_data, ioc_count)
     else:
-        print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Failure " + str(misp_response.status_code) + "), Please check the network connectivity")
+        print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Failure " + str(misp_response.status_code) + " / " + qradar_refset + "), Please check the network connectivity")
         sys.exit()
 
 def qradar_post_all(qradar_refset, import_data, ioc_count):
