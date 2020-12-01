@@ -39,13 +39,13 @@ Edit the config.ini file with favourite editor and provide the following informa
 
 ```ini
 [general]
-misp_auth_key = mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO
+misp_auth_key = mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO # or as environment variable
 misp_tag_filter = tlp:white,tlp:green
 misp_tag_blacklist = automatic-collection,low-risk
 misp_category_filter = Network activity,Payload delivery,Artifacts dropped,Payload installation,Persistence mechanism
 misp_server = <FQDN or IP of MISP Server>
 
-qradar_auth_key = 811aacf9-ef79-456h-98d4-5d27b7a94844
+qradar_auth_key = 811aacf9-ef79-456h-98d4-5d27b7a94844 # or as environment variable
 qradar_server = <FQDN or IP of QRadar Server>
 
 # In minutes

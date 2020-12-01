@@ -17,17 +17,21 @@ config = ConfigParser()
 config.optionxform = str 
 config.read('config.ini')
 
-misp_auth_key = config.get('general', 'misp_auth_key')
+misp_auth_key = config.get('general', 'misp_auth_key', fallback=os.environ.get('misp_auth_key'))
 misp_tag_filter = config.get('general', 'misp_tag_filter').split(",")
 misp_tag_blacklist = config.get('general', 'misp_tag_blacklist').split(",")
 misp_category_filter = config.get('general', 'misp_category_filter').split(",")
 misp_server = config.get('general', 'misp_server')
 
-qradar_auth_key = config.get('general', 'qradar_auth_key')
+qradar_auth_key = config.get('general', 'qradar_auth_key', fallback=os.environ.get('qradar_auth_key'))
 qradar_server = config.get('general', 'qradar_server')
 
 frequency = config.getint('general', 'frequency')
 fetch_incremental = config.getboolean("general", "fetch_incremental")
+
+if misp_auth_key == None or qradar_auth_key == None:
+    print("misp_auth_key / qradar_auth_key need to be defined in either config.ini or the environment")
+    sys.exit()
 
 # Read refset config
 qradar_refset_from_misp_attribute = {}
@@ -115,7 +119,7 @@ def get_misp_data(qradar_refset):
         print(time.strftime("%H:%M:%S") + " -- " + str(ioc_count) + " IOCs found for " + qradar_refset)
         qradar_post_all(qradar_refset, import_data, ioc_count)
     else:
-        print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Failure " + str(misp_response.status_code) + " / " + qradar_refset + "), Please check the network connectivity")
+        print(time.strftime("%H:%M:%S") + " -- " + "MISP API Query (Failure " + str(misp_response.status_code) + " / " + qradar_refset + "), please check the network connectivity")
         sys.exit()
 
 def qradar_post_all(qradar_refset, import_data, ioc_count):
