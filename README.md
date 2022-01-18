@@ -23,26 +23,42 @@ MISP has rich RESTful API support to integrate with any producers or consumers o
 
 ### Requirements:
 
- - Linux
  - Python 3 
- - apscheduler
+ - Packages in `requirements.txt`
  
 ### Installation:
 ```sh
 git clone https://github.com/karthikkbala/MISP-QRadar-Integration.git
+cd MISP-QRadar-Integration
+pip3 install -r requirements.txt
 ```
 
 ### Configuration:
 
-Edit the integration.py file with favourite editor and provide the following information.
+Edit the config.ini file with favourite editor and provide the following information.
 
-```sh
-misp_auth_key = "mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO"
-qradar_auth_key = "811aacf9-ef79-456h-98d4-5d27b7a94844"
-qradar_ref_set = "MISP_Event_IOC"
-misp_server = "IP Address of MISP Server"
-qradar_server = "IP Address of QRadar Server"
-frequency = 60 # In minutes
+```ini
+[general]
+misp_auth_key = mxVt2yZWkS39XemrgtyhbfYts7ZeeheQ50dXKLHO # or as environment variable
+misp_tag_filter = tlp:white,tlp:green
+misp_tag_blacklist = automatic-collection,low-risk
+misp_category_filter = Network activity,Payload delivery,Artifacts dropped,Payload installation,Persistence mechanism
+misp_server = <FQDN or IP of MISP Server>
+
+qradar_auth_key = 811aacf9-ef79-456h-98d4-5d27b7a94844 # or as environment variable
+qradar_server = <FQDN or IP of QRadar Server>
+
+# In minutes
+frequency = 60
+# Only load new attributes since the last interval
+fetch_incremental = True
+
+[refset_attributes]
+# Map which MISP attributes (e.g. url, dst-ip, src-ip, domain) to copy into which reference set
+MISP_IP_IOC = ip-dst,ip-src
+MISP_Host_IOC = domain,hostname,domain
+MISP_Url_IOC = url,uri
+MISP_Filehash_IOC = md5,sha1,sha256
 ```
 
 ### Usage:
@@ -51,28 +67,42 @@ python3 integration.py >> /var/log/misp-integration.log &
 ```
 
 ### Error Handling - Use Cases
- - Validate if the reference set exists
+ - Validate if the reference sets exist
  - Identify the Element Type of the reference set
- - If the Reference Set - Element Type is IP, only the IPs from the MISP will be imported to Reference Set.
  - Socket connection validation for QRadar and MISP
 
 ### Output - Success
 
 ```
-17:05:50 -- Checking HTTPS Connectivity to QRadar
-17:05:50 -- (Success) HTTPS Connectivity to QRadar
-17:05:50 -- Checking HTTPS Connectivity to MISP
-17:05:50 -- (Success) HTTPS Connectivity to MISP
-17:05:50 -- Validating if reference set MISP_Event_IOC exists
-17:05:50 -- Validating reference set MISP_Event_IOC - (Success)
-17:05:50 -- Identifying Reference set MISP_Event_IOC element type
-17:05:50 -- Reference set element type = IP (Success)
-17:05:50 -- The QRadar Reference Set MISP_Event_IOC Element Type = "IP". Only IPs will be imported to QRadar and the other IOC types will be discarded
-17:05:50 -- Initiating, GET data from MISP on <IP Address of MISP Server>
-17:05:51 -- MISP API Query (Success)
-17:05:51 -- 36 IOCs imported
-17:05:51 -- Trying to clean the IOCs to IP address, as MISP_Event_IOC element type = IP
-17:05:51 -- (Success) Extracted 16 IPs from initial import.
-17:05:51 -- Initiating, IOC POST to QRadar
-17:05:51 -- Imported 16 IOCs to QRadar (Success)
+14:55:04 -- Checking HTTPS Connectivity to QRadar
+14:55:04 -- (Success) HTTPS Connectivity to QRadar
+14:55:04 -- Checking HTTPS Connectivity to MISP
+14:55:04 -- (Success) HTTPS Connectivity to MISP
+14:55:05 -- Validating if reference set MISP_IP_IOC exists
+14:55:05 -- Validating reference set MISP_IP_IOC - (Success)
+14:55:05 -- Identifying Reference set MISP_IP_IOC element type
+14:55:05 -- Reference set element type = IP (Success)
+14:55:05 -- Initiating, GET data from MISP on <IP Address of MISP Server> since 2019-03-28
+14:55:07 -- MISP API Query (Success)
+14:55:07 -- 8 IOCs imported into MISP_IP_IOC
+14:55:07 -- Initiating, IOC POST to QRadar
+14:55:08 -- (Finished) Imported 8 IOCs to QRadar (Success)
+14:55:08 -- Validating if reference set MISP_Domain_IOC exists
+14:55:08 -- Validating reference set MISP_Domain_IOC - (Success)
+14:55:08 -- Identifying Reference set MISP_Domain_IOC element type
+14:55:08 -- Reference set element type = ALNIC (Success)
+14:55:08 -- Initiating, GET data from MISP on <IP Address of MISP Server> since 2019-03-28
+14:55:10 -- MISP API Query (Success)
+14:55:10 -- 4 IOCs imported into MISP_Domain_IOC
+14:55:10 -- Initiating, IOC POST to QRadar
+14:55:10 -- (Finished) Imported 4 IOCs to QRadar (Success)
+14:55:10 -- Validating if reference set MISP_URL_IOC exists
+14:55:10 -- Validating reference set MISP_URL_IOC - (Success)
+14:55:10 -- Identifying Reference set MISP_URL_IOC element type
+14:55:10 -- Reference set element type = ALNIC (Success)
+14:55:10 -- Initiating, GET data from MISP on <IP Address of MISP Server> since 2019-03-28
+14:55:12 -- MISP API Query (Success)
+14:55:12 -- 11 IOCs imported into MISP_URL_IOC
+14:55:12 -- Initiating, IOC POST to QRadar
+14:55:13 -- (Finished) Imported 11 IOCs to QRadar (Success)
 ```
