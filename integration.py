@@ -92,7 +92,7 @@ def qradar_post_all(import_data, ioc_count):
     qradar_response = requests.request("POST", QRadar_POST_url, data=import_data, headers=QRadar_headers, verify=False)
     if qradar_response.status_code == 200:
         print(time.strftime("%H:%M:%S") + " -- " + " (Finished) Imported " + str(ioc_count) + " IOCs to QRadar (Success)" )
-        print(time.strftime("%H:%M:%S") + " -- " + "Waiting to next schedule in " + schedule + "minutes")
+        print(time.strftime("%H:%M:%S") + " -- " + "Waiting to next schedule in " + frequency + "minutes")
     else:
         print(time.strftime("%H:%M:%S") + " -- " + "Could not POST IOCs to QRadar (Failure)")
 
@@ -116,6 +116,13 @@ def socket_check_misp():
     else:
         print(time.strftime("%H:%M:%S") + " -- " + "Could not establish HTTPS connection to MISP Server, Please check connectivity before proceeding.")
 
-scheduler = BlockingScheduler()
-scheduler.add_job(socket_check_qradar, 'interval', minutes=frequency, next_run_time=datetime.datetime.now())
-scheduler.start()
+
+
+if __name__ == '__main__':
+    scheduler = BlockingScheduler()
+    scheduler.add_job(socket_check_qradar, 'interval', minutes=frequency, next_run_time=datetime.datetime.now())
+
+    try:
+        scheduler.start()
+    except(KeyboardInterrupt):
+        pass
