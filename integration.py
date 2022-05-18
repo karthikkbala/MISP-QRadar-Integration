@@ -92,7 +92,7 @@ def qradar_post_all(import_data, ioc_count):
     qradar_response = requests.request("POST", QRadar_POST_url, data=import_data, headers=QRadar_headers, verify=False)
     if qradar_response.status_code == 200:
         print(time.strftime("%H:%M:%S") + " -- " + " (Finished) Imported " + str(ioc_count) + " IOCs to QRadar (Success)" )
-        print(time.strftime("%H:%M:%S") + " -- " + "Waiting to next schedule in " + schedule + "minutes")
+        print(time.strftime("%H:%M:%S") + " -- " + "Waiting to next schedule in " + frequency + "minutes")
     else:
         print(time.strftime("%H:%M:%S") + " -- " + "Could not POST IOCs to QRadar (Failure)")
 
