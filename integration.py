@@ -116,6 +116,13 @@ def socket_check_misp():
     else:
         print(time.strftime("%H:%M:%S") + " -- " + "Could not establish HTTPS connection to MISP Server, Please check connectivity before proceeding.")
 
-scheduler = BlockingScheduler()
-scheduler.add_job(socket_check_qradar, 'interval', minutes=frequency, next_run_time=datetime.datetime.now())
-scheduler.start()
+
+
+if __name__ == '__main__':
+    scheduler = BlockingScheduler()
+    scheduler.add_job(socket_check_qradar, 'interval', minutes=frequency, next_run_time=datetime.datetime.now())
+
+    try:
+        scheduler.start()
+    except(KeyboardInterrupt):
+        pass
